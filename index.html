@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *, *::before, *::after{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body{
+            font-family: system-ui;
+            min-height: 100vh;
+
+        }
+
+        main{
+            display: grid;
+            place-content: center;
+        }
+        dialog{
+            margin-inline: auto;
+            margin-block: auto; 
+
+            & {
+                text-align: center;
+            }
+
+            & .answers{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            & button{
+                height: 2.5em;
+            }
+            
+            & img{
+                width: 350px;
+                aspect-ratio: 1/1;
+                object-fit: contain;
+                
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <main>
+    </main>
+    <dialog id="startDialog" open>
+        <input id="nameInput" type="text" placeholder="Enter name" required>
+        <button onclick="gameStart()">Game Start</button>
+    </dialog>
+    <dialog id="gameDialog">
+        <h1>QUESTION #<span id="numberQ"></span></h1>
+        <img id="fruitImage" src="./img/apple.png" alt="">
+        <div id="answersContainer" class="answers">
+        </div>
+    </dialog>
+        
+    <script>
+
+        let fruits;
+        let currentFruit;
+        let questionNumber = -1;
+        let answers;
+        let score = 0;
+
+        async function getQuestions(){
+            let response = await fetch("http://localhost/quizer/api/db.php");
+            fruits = await response.json();
+            fruits.sort(randomizer);
+            console.log(fruits);
+            nextQuestion();
+        }
+
+        function nextQuestion(){
+            
+            questionNumber++;
+
+            currentFruit = fruits.at(questionNumber);
+
+            numberQ.innerHTML = questionNumber + 1;
+            fruitImage.src = `./img/${currentFruit.title}.png`;
+            
+            generateAnswer();
+        }
+
+        function generateAnswer(){
+            answers = Array.from(fruits);
+            answers.splice(4);
+
+            // console.log(answers);
+            if(!answers.includes(currentFruit)){
+                answers.pop();
+                answers.push(currentFruit);
+            }
+
+            // answers.sort(() => Math.random() - 0.5);
+
+            answers.sort(randomizer);
+            
+            answersContainer.innerHTML = ''; 
+            for (const answer of answers) {
+                answersContainer.innerHTML += `
+                <button onclick="checkAnswer(${answer.id})">${answer.title}</button>
+            `;
+            }
+        }
+
+        function randomizer(){
+            return Math.random() - 0.5;
+        }
+
+        function gameStart(){
+            gameDialog.showModal();
+            startDialog.close();
+        }
+
+        function checkAnswer(myAnswer){
+            // console.log(myAnswer, currentFruit.name);
+            
+            // console.log(myAnswer, currentFruit.title);
+
+            if(myAnswer == currentFruit.id){
+                score++;
+            }
+            console.log(myAnswer, "My score", score);
+
+            nextQuestion();
+        }
+
+
+
+        getQuestions();
+    </script>
+</body>
+</html>
